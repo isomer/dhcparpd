@@ -1,0 +1,50 @@
+DHCPARPD
+========
+(C) Copyright 2006, Perry Lorier
+
+Status: Alpha
+
+This program sniffs an interface listening for all arp requests.  When an arp
+request comes in, it queries an isc-dhcp server using the omapi protocol to
+lookup the MAC address of the host that owns the lease for that address, it
+then spoofs the correct ARP reply for that response.
+
+This uses:
+ * libdhcpctl for the omapi interface
+ * libpcap for sniffing the arp packets
+ * libnet for packet generation
+ * libconfig for config parsing
+
+The application should be mostly portable, except for the use of vasprintf
+in arp.c coz I'm lazy.  Patches to remove this limitation accepted :)
+
+The application should be feature complete, but hasn't been tested on a live 
+network.
+
+As well as answering arp requests on the specified interface, the program 
+listens for arp solicitation messages sent out via the kernel.  To enable this
+functionality you must ensure that your kernel is built with CONFIG_ARPD
+enabled and then run the following command:
+ echo 1 > /proc/sys/net/ipv4/neigh/<iface>/app_solicit
+If either of these requirements are false then the kernel will not bother to
+send arp solicitation requests to userspace and this program will not be able
+to answer them. 
+
+Config File Variables:
+interface
+ - Interface to listen for arp requests on
+server
+ - Address of DHCP server
+port 
+ - OMAPI port
+name
+ - OMAPI auth name 
+key 
+ - OMAPI key (base64 format)
+mapping
+ - Manual IP <-> MAC mappings in the format "<mac> <ip>", may be specified
+   multiple times
+pidfile
+ - Where to put the pidfile, defaults to /var/run/dhcparpd.pid
+daemonise
+ - 1 to daemonise, 0 to not, defaults to 1
